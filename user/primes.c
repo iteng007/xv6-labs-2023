@@ -1,6 +1,18 @@
 #include "kernel/types.h"
 #include "user/user.h"
 #define MAX 35
+//I've tried to find ways to 
+//fork child process first then redirect the numbers
+//it seems that it's hard to do so without rewrite the
+//redirect_msg function since once it reach the 31
+//the child do not know it needs stop
+//but if we want to make it know
+//we have to let the previous parent transfer
+//all number to the child.
+
+//The most simple way to do so is when we reach the point 
+//we kill all children and children's....children
+//but I do not think the speed of kill can surpass the speed of fork
 void redirect_msg(int in, int out);
 int main() {
   if (MAX<2) {
@@ -39,13 +51,19 @@ int main() {
       redirect_msg(in, chan[1]);
       int pid = fork();
       if (pid == 0) {
+		//close old read channel for parent,
+		close(in);
       } else if (pid > 0) {
+		close(chan[0]);
         // This child needs to wait its child,our or someone's grandchild (:
         while (wait(0) != -1) {
         }
         break; // Only child can fork new process.
       } else {
         printf("Wrong when fork");
+		close(in);
+		close(chan[0]);
+		close(chan[1]);
         exit(0);
       }
     }
@@ -61,18 +79,20 @@ void redirect_msg(int in, int out) {
   int *buf = malloc(sizeof(int));
   if (read(in, buf, sizeof(int)) != sizeof(int)) {
     printf("Child : %d error when reading from pipe\n", getpid());
-    exit(-1);
+    close(in);
+	close(out);
+	exit(-1);
   }
-  int read_cnd = 1;
+  int read_cnt = 1;
   int prime = *buf;
   printf("prime %d\n", prime);
   int read_size;
   while ((read_size = read(in, buf, sizeof(int))) > 0) {
     if (read_size < sizeof(int)) {
-      printf("Error: Not enough data in pipe\n");
+      printf("Error: No enough data in pipe\n");
       break;
     }
-    read_cnd++;
+    read_cnt++;
     if (*buf % prime != 0) {
       if (write(out, buf, sizeof(int)) != sizeof(int)) {
         printf("Parent: %d fail to write to pipe", getpid());
@@ -81,7 +101,7 @@ void redirect_msg(int in, int out) {
   }
   close(in);
   close(out);
-  if (read_cnd == 1) {
+  if (read_cnt == 1) {
     exit(0);
   }
 }

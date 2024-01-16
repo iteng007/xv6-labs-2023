@@ -3,6 +3,10 @@
 #define MAX 35
 void redirect_msg(int in, int out);
 int main() {
+  if (MAX<2) {
+	//Minimal number for max is 2
+	exit(0);
+  }
   int chan[2];
   if (pipe(chan) == -1) {
     printf("Wrong when create pipe\n");
@@ -10,9 +14,8 @@ int main() {
   int pid = fork();
   if (pid > 0) {
     int *buf = malloc(sizeof(int));
-	printf("prime 2\n");
     for (int i = 2; i <= MAX; i++) {
-      if (i % 2 != 0) {
+      if (i % 2 != 0||i==2) {
         *buf = i;
         write(chan[1], buf, sizeof(int));
       }
@@ -40,7 +43,10 @@ int main() {
         // This child needs to wait its child,our or someone's grandchild (:
         while (wait(0) != -1) {
         }
-        break;
+        break; // Only child can fork new process.
+      } else {
+        printf("Wrong when fork");
+        exit(0);
       }
     }
   } else {

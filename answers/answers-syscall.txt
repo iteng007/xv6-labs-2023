@@ -1,0 +1,14 @@
+Looking at the backtrace output, which function called syscall?
+
+usertrap() in kernel/trap.c
+
+What is the value of p->trapframe->a7 and what does that value represent? (Hint: look user/initcode.S, the first user program xv6 starts.)
+
+p->trapframe->a7==0x7
+it represents the system call number for the system call exec
+
+What was the previous mode that the CPU was in?
+
+Previous mode was user mode since the trapframe->sstatus is 0x22, which the 8th bit is 1, which means the previous mode is user mode.
+(The SPP bit indicates the privilege level at which a hart was executing before entering supervisor
+mode.)

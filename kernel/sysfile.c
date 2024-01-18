@@ -112,7 +112,7 @@ sys_fstat(void)
 {
   struct file *f;
   uint64 st; // user pointer to struct stat
-
+  
   argaddr(1, &st);
   if(argfd(0, 0, &f) < 0)
     return -1;

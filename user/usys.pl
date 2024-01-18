@@ -39,4 +39,5 @@ entry("uptime");
 
 #---
 entry("trace");
+entry("sysinfo");
 #---

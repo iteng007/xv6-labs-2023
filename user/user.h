@@ -1,5 +1,7 @@
 struct stat;
-
+//---
+struct sysinfo;
+//---
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
@@ -24,6 +26,7 @@ int sleep(int);
 int uptime(void);
 //---
 int trace(uint64);
+int sysinfo(struct sysinfo *);
 //---
 
 // ulib.c

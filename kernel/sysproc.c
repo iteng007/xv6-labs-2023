@@ -5,7 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
-
+#include "kernel/sysinfo.h"
 uint64
 sys_exit(void)
 {
@@ -93,8 +93,8 @@ sys_uptime(void)
 }
 
 
-//---
 //I just do not know 
+//---
 //return what well be good.
 uint64 sys_trace(void){
   uint64 mask;
@@ -102,6 +102,16 @@ uint64 sys_trace(void){
   struct proc *cur_proc = myproc();
   cur_proc->tracemask = mask;
   return 0;
+}
+
+uint64 sys_sysinfo(void){
+   uint64 addr;
+   argaddr(0,&addr);
+   struct sysinfo sys_info;
+   sys_info.freemem = freemem();
+   sys_info.nproc = nproc();
+   struct proc * p = myproc();
+   return  copyout(p->pagetable, addr, (char*)&sys_info, sizeof(sys_info));
 }
 
 //---

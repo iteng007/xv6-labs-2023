@@ -91,3 +91,17 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+//---
+//I just do not know 
+//return what well be good.
+uint64 sys_trace(void){
+  uint64 mask;
+  arguint64(0,&mask);
+  struct proc *cur_proc = myproc();
+  cur_proc->tracemask = mask;
+  return 0;
+}
+
+//---

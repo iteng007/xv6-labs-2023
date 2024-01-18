@@ -1,0 +1,29 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/riscv64-linux-gnu-gcc",
+      "-Wall",
+      "-Werror",
+      "-O",
+      "-fno-omit-frame-pointer",
+      "-ggdb",
+      "-gdwarf-2",
+      "-DSOL_SYSCALL",
+      "-DLAB_SYSCALL",
+      "-mcmodel=medany",
+      "-ffreestanding",
+      "-fno-common",
+      "-mno-relax",
+      "-I.",
+      "-fno-stack-protector",
+      "-fno-pie",
+      "-c",
+      "-o",
+      "kernel/syscall.o",
+      "kernel/syscall.c"
+    ],
+    "directory": "/home/father/xv6-labs-2023",
+    "file": "/home/father/xv6-labs-2023/kernel/syscall.c",
+    "output": "/home/father/xv6-labs-2023/kernel/syscall.o"
+  }
+]

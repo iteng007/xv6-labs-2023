@@ -92,6 +92,7 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
     pte_t *pte = &pagetable[PX(level, va)];
     if(*pte & PTE_V) {
       pagetable = (pagetable_t)PTE2PA(*pte);
+      *pte |= PTE_A;
     } else {
       if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
         return 0;
@@ -471,6 +472,19 @@ static void vmprint_helper(pagetable_t pagetable,int level){
 void vmprint(pagetable_t pagetable){
   printf("page table %p\n",pagetable);
   vmprint_helper(pagetable, 0);
+}
+pte_t *
+pgaccess_helper(pagetable_t pagetable, uint64 va)
+{
+  if(va >= MAXVA)
+    panic("walk");
+  for(int level = 2; level > 0; level--) {
+    pte_t *pte = &pagetable[PX(level, va)];
+    if(*pte & PTE_V) {
+      pagetable = (pagetable_t)PTE2PA(*pte);
+    }
+  }
+  return &pagetable[PX(0, va)];
 }
 
 //---

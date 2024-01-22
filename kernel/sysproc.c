@@ -74,7 +74,32 @@ sys_sleep(void)
 int
 sys_pgaccess(void)
 {
+  
+
   // lab pgtbl: your code here.
+  //---
+  //First, it takes the starting virtual address of the first user page to check
+  //Second, it takes the number of pages to check
+  //Finally, it takes a user address to a buffer to store the results into a bitmask
+  //---
+  uint64 first_vpa;
+  argaddr(0, &first_vpa);
+  int num_page;
+  argint(1, &num_page);
+  uint64 mask_uva;
+  argaddr(2, &mask_uva);
+  struct proc* proc = myproc();
+  pagetable_t pagetable = proc->pagetable;
+  //The  pointer to the first virtual page to be checked
+  uint64 temp_mask = 0;
+  for (int i = 0; i<64&&i<num_page; i++,first_vpa+=PGSIZE) {
+    pte_t * pte = pgaccess_helper(pagetable, first_vpa);
+    if (*pte&PTE_A) {
+      temp_mask|=(1<<i);
+    }
+    *pte = *pte&(~PTE_A);
+  }
+  copyout(pagetable, mask_uva,(char*)&temp_mask, sizeof(temp_mask));
   return 0;
 }
 #endif

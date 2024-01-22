@@ -175,6 +175,7 @@ int             copyin(pagetable_t, char *, uint64, uint64);
 int             copyinstr(pagetable_t, char *, uint64, uint64);
 //---
 void			vmprint(pagetable_t );
+pte_t *pgaccess_helper(pagetable_t , uint64 );
 //---
 
 

@@ -13,7 +13,7 @@ page table 0x0000000087f6b000
  .. .. ..509: pte 0x0000000021fdcc13 pa 0x0000000087f73000
  .. .. ..510: pte 0x0000000021fdd007 pa 0x0000000087f74000
  .. .. ..511: pte 0x0000000020001c0b pa 0x0000000080007000
-Basically the least significant three hex digit represents flags
-The most significant 3 hex digit are reserved.
-As there most are just zeros,so we can simply know that all digits except the last three are PPN.
-If we left shift by 9 bits,we can get the PTE physical address.
+Basically the least significant 10bit represents flags
+The most significant 10 bits are reserved.
+The bits in between are PPN.We need left shift by 12 bits to get the physical address.
+(As physical address is 39 bits (PPN we get from here is just 27bit))

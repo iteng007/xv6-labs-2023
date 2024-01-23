@@ -1,0 +1,19 @@
+My page table print output:
+page table 0x0000000087f6b000
+ ..0: pte 0x0000000021fd9c41 pa 0x0000000087f67000
+ Reserved PPN[2] PPN[1]   PPN[0] RSW D A G U X W R V
+		   0010 000111111 101100111 00 0 1 0 0 0 0 0 1
+ .. ..0: pte 0x0000000021fd9841 pa 0x0000000087f66000
+ .. .. ..0: pte 0x0000000021fda01b pa 0x0000000087f68000
+ .. .. ..1: pte 0x0000000021fd9417 pa 0x0000000087f65000
+ .. .. ..2: pte 0x0000000021fd9007 pa 0x0000000087f64000
+ .. .. ..3: pte 0x0000000021fd8c17 pa 0x0000000087f63000
+ ..255: pte 0x0000000021fda841 pa 0x0000000087f6a000
+ .. ..511: pte 0x0000000021fda441 pa 0x0000000087f69000
+ .. .. ..509: pte 0x0000000021fdcc13 pa 0x0000000087f73000
+ .. .. ..510: pte 0x0000000021fdd007 pa 0x0000000087f74000
+ .. .. ..511: pte 0x0000000020001c0b pa 0x0000000080007000
+Basically the least significant three hex digit represents flags
+The most significant 3 hex digit are reserved.
+As there most are just zeros,so we can simply know that all digits except the last three are PPN.
+If we left shift by 9 bits,we can get the PTE physical address.

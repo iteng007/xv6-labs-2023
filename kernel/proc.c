@@ -145,7 +145,11 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
+  //---
+  p->proc_alarm.handler = 0;
+  p->proc_alarm.left_ticks = -1;
+  p->proc_alarm.intervals  = -1;
+  //---
   return p;
 }
 
@@ -686,3 +690,45 @@ procdump(void)
     printf("\n");
   }
 }
+
+//---
+//copy r to l
+void copy_trapframe(struct trapframe*l,struct trapframe*r){
+  l->a0 = r->a0;
+  l->a1 = r->a1;
+  l->a2 = r->a2;
+  l->a3 = r->a3;
+  l->a4 = r->a4;
+  l->a5 = r->a5;
+  l->a6 = r->a6;
+  l->a7 = r->a7;
+  l->epc = r->epc;
+  l->gp = r->gp;
+  l->kernel_hartid = r->kernel_hartid;
+  l->kernel_satp = r->kernel_satp;
+  l->kernel_sp  =r->kernel_sp;
+  l->kernel_trap = r->kernel_trap;
+  l->s0 = r->s0;
+  l->s1 = r->s1;
+  l->s2 = r->s2;
+  l->s3 = r->s3;
+  l->s4 = r->s4;
+  l->s5 = r->s5;
+  l->s6 = r->s6;
+  l->s7 = r->s7;
+  l->s8 = r->s8;
+  l->s9 = r->s9;
+  l->s10 = r->s10;
+  l->s11 = r->s11;
+  l->sp = r->sp;
+  l->tp = r->tp;
+  l->t0 = r->t0;
+  l->t1 = r->t1;
+  l->t2 = r->t2;
+  l->t3 = r->t3;
+  l->t4 = r->t4;
+  l->t5 = r->t5;
+  l->t6 = r->t6;
+  l->ra = r->ra;
+}
+//---

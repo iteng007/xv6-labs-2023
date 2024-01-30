@@ -1,4 +1,5 @@
 // Saved registers for kernel context switches.
+#include <sys/types.h>
 struct context {
   uint64 ra;
   uint64 sp;
@@ -81,6 +82,20 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+
+
+//---
+struct alarm{
+  int intervals;
+  int left_ticks;
+  void (*handler)();
+  struct context ctx;
+  struct trapframe trapframe;
+  int is_running;//1 for running 0 for not running.
+};
+//---
+
+
 // Per-process state
 struct proc {
   struct spinlock lock;
@@ -104,4 +119,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  //---
+  struct alarm proc_alarm;
+  //---
 };
+

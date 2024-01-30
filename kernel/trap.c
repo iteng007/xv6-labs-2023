@@ -77,8 +77,25 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2){
+    if (--p->proc_alarm.left_ticks==0&&!p->proc_alarm.is_running) {
+      // uint64 fn_ptr = walkaddr(p->pagetable, (uint64)p->proc_alarm.handler);
+      // // fn_ptr();
+      // //change pc to fn,and ra to 
+      // // uint64 temp = p->trapframe->ra;
+      // // p->trapframe->epc
+      p->proc_alarm.left_ticks = p->proc_alarm.intervals;
+      
+      copy_trapframe(&p->proc_alarm.trapframe,p->trapframe);
+      p->proc_alarm.ctx = p->context;
+      //mark it as running
+      p->proc_alarm.is_running = 1;
+      //
+      p->trapframe->epc  = (uint64)p->proc_alarm.handler;
+    }
     yield();
+  }
+    
 
   usertrapret();
 }

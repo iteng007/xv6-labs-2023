@@ -67,6 +67,31 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+  }else if (r_scause()==15) {
+    uint64 dstva = r_stval();
+    if(dstva >= MAXVA)
+    {
+      setkilled(p);
+      exit(-1);
+    }
+    pte_t *pte = walk(p->pagetable,dstva,0);
+    if (!(*pte&PTE_C)) {
+      printf("Segment fault!\n");
+      setkilled(p);
+      exit(-1);
+    }
+    uint64 new = (uint64)kalloc();
+    if (!new) {
+      // printf("Out of memory!");
+      setkilled(p);
+      exit(-1);
+    }
+    uint64 flags = ((PTE_FLAGS(*pte))&(~PTE_C))|(PTE_W);
+
+    uint64 old = walkaddr(p->pagetable,dstva);
+    memmove((void*)new,(void*)old,PGSIZE);
+    uvmunmap(p->pagetable,PGROUNDDOWN(dstva),1,1);
+    mappages(p->pagetable,PGROUNDDOWN(dstva),PGSIZE,new,flags);
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());

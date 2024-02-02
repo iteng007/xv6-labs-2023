@@ -13,7 +13,7 @@ void freerange(void *pa_start, void *pa_end);
 
 extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
-
+uint64 pgrefcnt[(PHYSTOP-KERNBASE)/PGSIZE];
 struct run {
   struct run *next;
 };
@@ -27,6 +27,9 @@ void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
+  for (uint64 i = 0; i<(PHYSTOP-KERNBASE)/PGSIZE; i++) {
+    pgrefcnt[i] = 0;
+  }
   freerange(end, (void*)PHYSTOP);
 }
 
@@ -52,6 +55,9 @@ kfree(void *pa)
     panic("kfree");
 
   // Fill with junk to catch dangling refs.
+  // printf("cur ref for pa %p is %d\n",pa,pgrefcnt[((uint64)pa-KERNBASE)/PGSIZE]);
+
+  if (pgrefcnt[((uint64)pa-KERNBASE)/PGSIZE]==0||--pgrefcnt[((uint64)pa-KERNBASE)/PGSIZE]==0) {
   memset(pa, 1, PGSIZE);
 
   r = (struct run*)pa;
@@ -60,6 +66,8 @@ kfree(void *pa)
   r->next = kmem.freelist;
   kmem.freelist = r;
   release(&kmem.lock);
+  }
+
 }
 
 // Allocate one 4096-byte page of physical memory.
@@ -76,7 +84,23 @@ kalloc(void)
     kmem.freelist = r->next;
   release(&kmem.lock);
 
-  if(r)
+  if(r){
     memset((char*)r, 5, PGSIZE); // fill with junk
+    pgrefcnt[((uint64)r-KERNBASE)/PGSIZE]=1;  
+  }
   return (void*)r;
+}
+//for debugging
+uint64 freemem(){
+  struct run *r;
+
+  acquire(&kmem.lock);
+  r = kmem.freelist;
+  uint64 freemem=0;
+  while(r){
+  r = r->next;
+  freemem+=PGSIZE;
+  }
+  release(&kmem.lock);
+  return freemem;
 }

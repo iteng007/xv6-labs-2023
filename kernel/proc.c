@@ -379,7 +379,7 @@ exit(int status)
   p->state = ZOMBIE;
 
   release(&wait_lock);
-
+  // printf("free mem is %d\n",freemem());
   // Jump into the scheduler, never to return.
   sched();
   panic("zombie exit");

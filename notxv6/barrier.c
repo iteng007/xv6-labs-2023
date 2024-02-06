@@ -46,8 +46,6 @@ barrier()
   pthread_mutex_unlock(&bstate.barrier_mutex);
   
   
-  // bstate.nthread = 0;
-  
 }
 
 static void *

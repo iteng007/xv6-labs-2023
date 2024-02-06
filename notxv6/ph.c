@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -16,7 +17,7 @@ struct entry {
 struct entry *table[NBUCKET];
 int keys[NKEYS];
 int nthread = 1;
-
+pthread_mutex_t locks[NBUCKET];
 
 double
 now()
@@ -43,25 +44,29 @@ void put(int key, int value)
 
   // is the key already present?
   struct entry *e = 0;
+  
   for (e = table[i]; e != 0; e = e->next) {
-    if (e->key == key)
+    if (e->key == key){
       break;
+    }
   }
   if(e){
     // update the existing key.
     e->value = value;
   } else {
-    // the new is new.
+    //since it only test if the key exsits.
+    //So only change to key should be protected
+    pthread_mutex_lock(&locks[i]);
+    
     insert(key, value, &table[i], table[i]);
+    pthread_mutex_unlock(&locks[i]);
   }
-
 }
 
 static struct entry*
 get(int key)
 {
   int i = key % NBUCKET;
-
 
   struct entry *e = 0;
   for (e = table[i]; e != 0; e = e->next) {
@@ -76,7 +81,7 @@ put_thread(void *xa)
 {
   int n = (int) (long) xa; // thread number
   int b = NKEYS/nthread;
-
+  
   for (int i = 0; i < b; i++) {
     put(keys[b*n + i], n);
   }
@@ -116,6 +121,9 @@ main(int argc, char *argv[])
   assert(NKEYS % nthread == 0);
   for (int i = 0; i < NKEYS; i++) {
     keys[i] = random();
+  }
+  for (int i = 0; i<NBUCKET; i++) {
+    pthread_mutex_init(&locks[i],NULL);
   }
 
   //

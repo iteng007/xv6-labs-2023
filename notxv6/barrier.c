@@ -44,8 +44,6 @@ barrier()
     }
   }
   pthread_mutex_unlock(&bstate.barrier_mutex);
-  
-  
 }
 
 static void *

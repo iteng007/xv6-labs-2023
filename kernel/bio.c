@@ -66,26 +66,37 @@ void binit(void) {
 static struct buf *bget(uint dev, uint blockno) {
   struct buf *b;
   // printf("Try to find dev : %d,blockno: %d\n",dev,blockno);
-  acquire(&bcache.lock);
+  
   int bucket = (dev + blockno) % NBUCKET;
-  // acquire(&bcache.bucket_lock[bucket]);
+  acquire(&bcache.bucket_lock[bucket]);
   // Is the block already cached?
   for (b = bcache.head[bucket].next; b != &bcache.head[bucket]; b = b->next) {
     // initlock(&bcache.bucket_lock[i], "bucket");
     if (b->dev == dev && b->blockno == blockno) {
       b->refcnt++;
-      release(&bcache.lock);
-      // release(&bcache.bucket_lock[bucket]);
+      // release(&bcache.lock);
+      release(&bcache.bucket_lock[bucket]);
       acquiresleep(&b->lock);
       return b;
     }
   }
+  release(&bcache.bucket_lock[bucket]);
+  acquire(&bcache.lock);
   //  printf("No dev : %d,blockno: %d is found try to allocate new one\n",dev,blockno);
   // Not cached.
   // Recycle the least recently used (LRU) unused buffer.
   // release(&bcache.bucket_lock[bucket]);
   for (b = bcache.buf[0]; b < bcache.buf[0] + (NBUF/NBUCKET) * NBUCKET; b++) {
     int old_bucket = (b->blockno+b->dev)%NBUCKET;
+    if (old_bucket<bucket) {
+      acquire(&bcache.bucket_lock[old_bucket]);
+      acquire(&bcache.bucket_lock[bucket]);
+    }else if (old_bucket>bucket) {
+      acquire(&bcache.bucket_lock[bucket]);
+      acquire(&bcache.bucket_lock[old_bucket]);
+    }else {
+      acquire(&bcache.bucket_lock[bucket]);
+    }
     if (b->refcnt == 0) {
       if (old_bucket!=bucket) {
         struct buf * new_head = &bcache.head[bucket];
@@ -97,6 +108,10 @@ static struct buf *bget(uint dev, uint blockno) {
         b->next = new_head;
         new_head->prev->next = b;
         new_head->prev = b;
+        release(&bcache.bucket_lock[bucket]);
+        release(&bcache.bucket_lock[old_bucket]);
+      }else {
+        release(&bcache.bucket_lock[bucket]);
       }
       b->dev = dev;
       b->blockno = blockno;
@@ -105,6 +120,15 @@ static struct buf *bget(uint dev, uint blockno) {
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
+    }
+    if (old_bucket<bucket) {
+      release(&bcache.bucket_lock[old_bucket]);
+      release(&bcache.bucket_lock[bucket]);
+    }else if (old_bucket>bucket) {
+      release(&bcache.bucket_lock[bucket]);
+      release(&bcache.bucket_lock[old_bucket]);
+    }else {
+      release(&bcache.bucket_lock[bucket]);
     }
   }
   panic("bget: no buffers");

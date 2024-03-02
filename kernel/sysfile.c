@@ -15,6 +15,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include <math.h>
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -322,7 +323,7 @@ sys_open(void)
       end_op();
       return -1;
     }
-  } else {
+  }else {
     if((ip = namei(path)) == 0){
       end_op();
       return -1;
@@ -332,6 +333,30 @@ sys_open(void)
       iunlockput(ip);
       end_op();
       return -1;
+    }
+  }
+  struct inode *dip = ip;
+  while (ip->type == T_SYMLINK && !(omode&O_NOFOLLOW)) {
+    if (readi(ip, 0, (uint64)path, 0, MAXPATH)<MAXPATH) {
+        iunlockput(ip);
+        end_op();
+        return -1;
+    };
+    iunlock(ip);
+    if((ip = namei(path)) == 0){
+      end_op();
+      return -1;
+    }
+    ilock(ip);
+    if(ip->type == T_DIR && omode != O_RDONLY){
+      iunlockput(ip);
+      end_op();
+      return -1;
+    }
+    if (ip==dip) {
+     iunlockput(ip);
+     end_op();
+     return -1;
     }
   }
 
@@ -501,5 +526,43 @@ sys_pipe(void)
     fileclose(wf);
     return -1;
   }
+  return 0;
+}
+uint64
+sys_symlink(void){
+  //char *target, char *path
+  char  name[DIRSIZ],target[MAXPATH], path[MAXPATH];
+  struct inode  *dp,*ip;
+  if(argstr(0, target, MAXPATH) < 0 || argstr(1, path, MAXPATH) < 0)
+    return -1;
+  //if path already exist.
+  begin_op();
+  if ((namei(path))!=0) {
+    end_op();
+    return -1;
+  }
+  //if path's parent path do not exist
+  if((dp = nameiparent(path, name)) == 0){
+    end_op();
+    return -1;
+  }
+  ip = ialloc(dp->dev, T_SYMLINK);
+  ilock(ip);
+  if (writei(ip, 0, (uint64)target, 0, MAXPATH)<MAXPATH) {
+    end_op();
+    return -1;
+  }
+  ip->nlink++;
+  iupdate(ip);
+  iunlock(ip);
+  ilock(dp);
+  if (dirlink(dp, name, ip->inum)<0) {
+    iunlockput(dp);
+    end_op();
+    return -1;
+  }
+  iunlockput(dp);
+  iput(ip);
+  end_op();
   return 0;
 }
